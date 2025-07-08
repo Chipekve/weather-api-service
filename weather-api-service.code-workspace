@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "weather-api-service",
+			"path": "."
+		},
+		{
+			"name": "tg_bot",
+			"path": "../tg_bot"
+		}
+	],
+	"settings": {}
+}
