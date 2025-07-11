@@ -15,15 +15,11 @@ router = Router()
 @router.message(F.text == "/start")
 async def cmd_start(message: types.Message, state: FSMContext):
     await state.clear()
-    # Получаем приветствие и картинку с веб-сервиса
     info = await api_post("/user/start", {"user_id": message.from_user.id})
-    image_url = info.get("image_url")
     text = info.get("text")
+    video_url = "https://i.imgur.com/LJdfKwu.mp4"
     if text:
-        if image_url:
-            await message.answer_photo(photo=image_url, caption=text, reply_markup=main_kb)
-        else:
-            await message.answer(text, reply_markup=main_kb)
+        await message.answer_animation(animation=video_url, caption=text, reply_markup=main_kb)
     else:
         await message.answer("Ошибка: не удалось получить приветствие.", reply_markup=main_kb)
 
