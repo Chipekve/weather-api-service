@@ -16,12 +16,10 @@ router = Router()
 async def cmd_start(message: types.Message, state: FSMContext):
     await state.clear()
     info = await api_post("/user/start", {"user_id": message.from_user.id})
-    print("DEBUG /start info:", info)
     text = info.get("text")
-    # video_url = "https://i.imgur.com/LJdfKwu.mp4"
+    video_url = "https://i.imgur.com/LJdfKwu.mp4"
     if text:
-        await message.answer(f"DEBUG: {text}", reply_markup=main_kb)
-        # await message.answer_animation(animation=video_url, caption=text, reply_markup=main_kb)
+        await message.answer_animation(animation=video_url, caption=text, reply_markup=main_kb)
     else:
         await message.answer("Ошибка: не удалось получить приветствие.", reply_markup=main_kb)
 
