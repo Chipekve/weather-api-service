@@ -12,6 +12,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+
+    - name: Create data directory for SQLite
+      run: mkdir -p data
+
+    - name: Set permissions for data directory
+      run: chmod 777 data
     
     - name: Set up Python
       uses: actions/setup-python@v4
