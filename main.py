@@ -61,7 +61,7 @@ class CityWeatherRequest(BaseModel):
     city: str
 
 # === Работа с БД пользователей ===
-DB_PATH = os.getenv("USERS_DB_PATH", "users.db")
+DB_PATH = os.getenv("USERS_DB_PATH", "data/users.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
