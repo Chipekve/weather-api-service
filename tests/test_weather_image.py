@@ -14,55 +14,49 @@ def test_image_data():
     """
     return {
         "city": "Moscow",
-        "temperature": 20,
-        "description": "Clear sky",
-        "humidity": 65,
-        "wind_speed": 5.5,
-        "icon": "01d"
+        "weather_data": {
+            "current": {
+                "temp_c": 20,
+                "condition": {"text": "Clear sky"}
+            },
+            "location": {
+                "localtime": "2024-07-12 12:00"
+            }
+        }
     }
 
 
-def test_create_weather_image(test_image_data):
+# Удаляю старый тест с create_weather_image, оставляю только актуальные тесты для generate_weather_image
+
+
+def test_generate_weather_image(test_image_data):
     """
     Test weather image creation
     """
-    image_path = create_weather_image(
-        city=test_image_data["city"],
-        temperature=test_image_data["temperature"],
-        description=test_image_data["description"],
-        humidity=test_image_data["humidity"],
-        wind_speed=test_image_data["wind_speed"],
-        icon=test_image_data["icon"]
+    buf = generate_weather_image(
+        weather_data=test_image_data["weather_data"],
+        city=test_image_data["city"]
     )
-    
-    # Проверяем, что файл создан
-    assert os.path.exists(image_path)
-    
+    # Проверяем, что вернулся BytesIO
+    assert hasattr(buf, 'read')
     # Проверяем, что это валидное изображение
     try:
-        with Image.open(image_path) as img:
-            assert img.size[0] > 0
-            assert img.size[1] > 0
+        img = Image.open(buf)
+        assert img.size[0] > 0
+        assert img.size[1] > 0
     except Exception as e:
         pytest.fail(f"Failed to open generated image: {e}")
-    finally:
-        # Удаляем тестовое изображение
-        if os.path.exists(image_path):
-            os.remove(image_path)
 
 
-@pytest.mark.parametrize("invalid_icon", ["", "invalid", "999", None])
-def test_create_weather_image_invalid_icon(test_image_data, invalid_icon):
+@pytest.mark.parametrize("invalid_condition", ["", "invalid", "999", None])
+def test_generate_weather_image_invalid_condition(test_image_data, invalid_condition):
     """
-    Test weather image creation with invalid icon
+    Test weather image creation with invalid condition
     """
-    test_image_data["icon"] = invalid_icon
-    with pytest.raises(Exception):
-        create_weather_image(
-            city=test_image_data["city"],
-            temperature=test_image_data["temperature"],
-            description=test_image_data["description"],
-            humidity=test_image_data["humidity"],
-            wind_speed=test_image_data["wind_speed"],
-            icon=test_image_data["icon"]
-        ) 
+    test_image_data["weather_data"]["current"]["condition"]["text"] = invalid_condition
+    buf = generate_weather_image(
+        weather_data=test_image_data["weather_data"],
+        city=test_image_data["city"]
+    )
+    # Проверяем, что вернулся BytesIO даже при невалидном condition
+    assert hasattr(buf, 'read') 
