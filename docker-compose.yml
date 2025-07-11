@@ -21,6 +21,8 @@ services:
       - ./logs:/app/logs
     env_file:
       - .env
+    environment:
+      - API_BASE_URL=http://api:8000
     depends_on:
       - api
     restart: always 

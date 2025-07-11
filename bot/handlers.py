@@ -168,7 +168,7 @@ async def city_choose_handler(callback: types.CallbackQuery, state: FSMContext):
     cities = data.get("cities", [])
     city_name = next((c["name"] for c in cities if int(c["id"]) == city_id), None)
     if city_name:
-        await callback.message.edit_text(f"{city_name} — я это запишу", reply_markup=None)
+        await callback.message.edit_text(f"{city_name} — 👀 я это запишу ✍️", reply_markup=None)
     else:
         await callback.message.edit_text("Город выбран!", reply_markup=None)
     await state.clear()
