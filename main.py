@@ -127,7 +127,7 @@ class StartInfoResponse(BaseModel):
 # Конфигурация
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 WEATHER_API_BASE_URL = "http://api.weatherapi.com/v1"
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://0.0.0.0:8000")
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 

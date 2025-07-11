@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_URL = os.getenv("API_BASE_URL", "http://api:8000")
 
 async def api_post(endpoint, payload):
     async with aiohttp.ClientSession() as session:
