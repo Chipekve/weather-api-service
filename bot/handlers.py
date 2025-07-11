@@ -15,6 +15,8 @@ router = Router()
 @router.message(F.text == "/start")
 async def cmd_start(message: types.Message, state: FSMContext):
     await state.clear()
+    print("DEBUG TEXT_WEATHER:", TEXT_WEATHER)
+    print("DEBUG main_kb:", main_kb)
     info = await api_post("/user/start", {"user_id": message.from_user.id})
     text = info.get("text")
     video_url = "https://i.imgur.com/LJdfKwu.mp4"
