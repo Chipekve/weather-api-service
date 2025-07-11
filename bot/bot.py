@@ -59,7 +59,7 @@ async def notify_restart(bot):
         try:
             await bot.send_message(user_id, "💢был рестарт", reply_markup=main_kb)
         except Exception as e:
-            print(f"Не удалось отправить сообщение {user_id}: {e}")
+            pass
 
 async def on_startup(dispatcher):
     logger.info("Бот успешно запущен!")

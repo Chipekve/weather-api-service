@@ -37,8 +37,33 @@ jobs:
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
-  deploy:
+  build-and-push:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+    - name: Build and push API image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: chipekve/weather-api-service-api:latest
+    - name: Build and push Bot image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: Dockerfile.bot
+        push: true
+        tags: chipekve/weather-api-service-bot:latest
+
+  deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
@@ -53,8 +78,9 @@ jobs:
         script: |
           cd /root/weather-api-service
           git pull origin main
+          docker pull chipekve/weather-api-service-api:latest
+          docker pull chipekve/weather-api-service-bot:latest
           docker-compose down
-          docker-compose build --no-cache
           docker-compose up -d
           docker system prune -f
           echo "✅ Развертывание завершено!" 

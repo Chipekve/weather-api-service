@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 
 PAGE_SIZE = 3
 TEXT_SET_CITY = "поменять что-то в жизни"
-TEXT_WEATHER = "🌦️ Новая погода!"
+TEXT_WEATHER = "👀 Чо по погоде?"
 TEXT_SHOW_CITY = "чо по городу 🤌🏻"
 CANCEL_TEXT = "❌Отмена"
 CANCEL_KB = InlineKeyboardMarkup(
