@@ -250,7 +250,7 @@ async def help_handler(message: types.Message, state: FSMContext):
         "• Можно быстро добавлять новые функции (например, прогноз, уведомления, аналитику).\n\n"
     )
     await message.answer(help_text)
-    gif_url = "https://imgur.com/BIVETF7"
+    gif_url = "https://i.imgur.com/BIVETF7.mp4"
     await message.answer_animation(gif_url)
 
 @router.message(F.text == "Популярные города")
