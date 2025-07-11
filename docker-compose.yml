@@ -10,6 +10,7 @@ services:
     volumes:
       - ./:/app
       - ./logs:/app/logs
+      - ./data:/app/data
     env_file:
       - .env
     restart: always
@@ -21,7 +22,7 @@ services:
     volumes:
       - ./:/app
       - ./logs:/app/logs
-      - ./users.db:/app/users.db
+      - ./data:/app/data
     env_file:
       - .env
     environment:
