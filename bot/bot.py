@@ -40,7 +40,7 @@ dp.include_router(router)
 API_URL = os.getenv("API_BASE_URL", "http://api:8000")
 
 def get_all_user_ids():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("data/users.db")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
