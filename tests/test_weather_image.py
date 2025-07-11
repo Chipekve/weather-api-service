@@ -4,7 +4,7 @@ Tests for weather image generation
 import os
 from PIL import Image
 import pytest
-from weather_image import create_weather_image
+from weather_image import generate_weather_image
 
 
 @pytest.fixture
