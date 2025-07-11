@@ -4,6 +4,8 @@ Fixtures for tests
 import pytest
 from fastapi.testclient import TestClient
 from main import app
+import os
+os.makedirs("data", exist_ok=True)
 
 
 @pytest.fixture
