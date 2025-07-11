@@ -38,11 +38,11 @@ def generate_weather_image(weather_data, city):
         font_city = font_temp = font_cond = font_date = ImageFont.load_default()
 
     temp = weather_data['current']['temp_c']
-    condition = weather_data['current']['condition']['text']
+    condition = weather_data['current']['condition'].get('text') or "Неизвестно"
     date = weather_data['location']['localtime'].split()[0]
 
     # Эмодзи по погоде
-    cond_lower = condition.lower()
+    cond_lower = (condition or "").lower()
     if "дожд" in cond_lower:
         emoji = "🌧️"
     elif "ясно" in cond_lower or "солнечно" in cond_lower:
