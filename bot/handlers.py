@@ -4,7 +4,6 @@ from .keyboards import main_kb, get_cities_keyboard, PAGE_SIZE, TEXT_SET_CITY, T
 from .states import CitySelectStates
 from .api import api_post, get_weather_image, get_weather_image_by_city
 import asyncio
-from rich import print as rich_print
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types.input_file import BufferedInputFile
@@ -15,8 +14,6 @@ router = Router()
 @router.message(F.text == "/start")
 async def cmd_start(message: types.Message, state: FSMContext):
     await state.clear()
-    print("DEBUG TEXT_WEATHER:", TEXT_WEATHER)
-    print("DEBUG main_kb:", main_kb)
     info = await api_post("/user/start", {"user_id": message.from_user.id})
     text = info.get("text")
     video_url = "https://i.imgur.com/LJdfKwu.mp4"
@@ -51,7 +48,6 @@ async def set_city_start(message: types.Message, state: FSMContext):
 
 @router.callback_query(F.data == "cancel_city", CitySelectStates.waiting_for_city_name)
 async def cancel_city_handler(callback: types.CallbackQuery, state: FSMContext):
-    rich_print(f"[green]Callback: {callback.data} от пользователя {callback.from_user.id}[/green]")
     await callback.answer("OK")
     if not callback.message:
         await state.clear()
@@ -73,7 +69,6 @@ async def cancel_city_handler(callback: types.CallbackQuery, state: FSMContext):
         except Exception:
             pass
     else:
-        # fallback: если cancel_msg_id нет, отправить обычное сообщение
         cancel_msg = await bot.send_message(chat_id, "❌Смена города прервана")
         await asyncio.sleep(1)
         try:
@@ -154,7 +149,6 @@ async def city_search_handler(message: types.Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("city_"), CitySelectStates.waiting_for_city_name)
 async def city_choose_handler(callback: types.CallbackQuery, state: FSMContext):
-    rich_print(f"[green]Callback: {callback.data} от пользователя {callback.from_user.id}[/green]")
     await callback.answer("OK")
     user_id = callback.from_user.id
     parts = callback.data.split("_", 3)
@@ -203,7 +197,6 @@ async def city_pagination_handler(callback: types.CallbackQuery, state: FSMConte
 @router.message(F.text == TEXT_WEATHER)
 async def weather_handler(message: types.Message, state: FSMContext):
     await state.clear()
-    rich_print(f"[green]Погода: пользователь {message.from_user.id} запросил погоду[/green]")
     user_id = message.from_user.id
     data = await api_post("/weather", {"user_id": user_id})
     if data.get("success"):
@@ -217,9 +210,7 @@ async def weather_handler(message: types.Message, state: FSMContext):
 @router.message(F.text == TEXT_SHOW_CITY)
 async def show_city_handler(message: types.Message, state: FSMContext):
     await state.clear()
-    rich_print(f"[green]Узнать город: пользователь {message.from_user.id} запросил свой город[/green]")
     user_id = message.from_user.id
-    # Получаем город из API
     data = await api_post("/weather", {"user_id": user_id})
     if data.get("success") and data.get("raw_data"):
         city = data["raw_data"].get("location", {}).get("name")
@@ -259,22 +250,19 @@ async def help_handler(message: types.Message, state: FSMContext):
         "• Можно быстро добавлять новые функции (например, прогноз, уведомления, аналитику).\n\n"
     )
     await message.answer(help_text)
-    gif_url = "https://i.imgur.com/M2tKCc3.mp4"
+    gif_url = "https://imgur.com/BIVETF7"
     await message.answer_animation(gif_url)
 
 @router.message(F.text == "Популярные города")
 async def popular_cities_handler(message: types.Message, state: FSMContext):
     await state.clear()
-    rich_print(f"[green]Популярные города: пользователь {message.from_user.id} запросил список[/green]")
     kb = get_popular_cities_keyboard(page=1)
     await message.answer("Выберите город из списка:", reply_markup=kb)
 
 @router.callback_query(F.data.startswith("popularcity_"))
 async def popular_city_weather_handler(callback: types.CallbackQuery):
     city = callback.data[len("popularcity_"):].strip()
-    rich_print(f"[green]Популярный город: пользователь {callback.from_user.id} выбрал {city}[/green]")
     await callback.answer("OK")
-    # Получаем погоду по названию города (через POST /weather/by_city)
     data = await api_post("/weather/by_city", {"city": city})
     if data.get("success"):
         await callback.message.edit_text(
@@ -294,9 +282,7 @@ async def popular_cities_pagination_handler(callback: types.CallbackQuery):
 @router.callback_query(F.data.startswith("popularforecast_"))
 async def popular_city_forecast_handler(callback: types.CallbackQuery):
     city = callback.data[len("popularforecast_"):].strip()
-    rich_print(f"[green]Популярный город: пользователь {callback.from_user.id} запросил прогноз по {city}[/green]")
     await callback.answer("OK")
-    # Получаем прогноз по названию города (через POST /weather/forecast_by_city)
     data = await api_post("/weather/forecast_by_city", {"city": city})
     if data.get("success"):
         await callback.message.edit_text(data["formatted_message"])
@@ -328,5 +314,4 @@ async def show_weather_image_handler(callback: types.CallbackQuery):
 
 @router.callback_query()
 async def log_any_callback(callback: types.CallbackQuery):
-    rich_print(f"[green]Callback: {callback.data} от пользователя {callback.from_user.id}[/green]")
     await callback.answer("OK") 

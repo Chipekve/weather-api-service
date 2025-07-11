@@ -2,13 +2,10 @@ version: '3.8'
 
 services:
   api:
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    image: chipekve/weather-api-service-api:latest
     ports:
       - "8000:8000"
     volumes:
-      - ./:/app
       - ./logs:/app/logs
       - ./data:/app/data
     env_file:
@@ -16,11 +13,8 @@ services:
     restart: always
 
   bot:
-    build:
-      context: .
-      dockerfile: Dockerfile.bot
+    image: chipekve/weather-api-service-bot:latest
     volumes:
-      - ./:/app
       - ./logs:/app/logs
       - ./data:/app/data
     env_file:
