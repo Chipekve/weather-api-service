@@ -5,7 +5,9 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 import os
+print("WORKING DIR:", os.getcwd())
 os.makedirs("data", exist_ok=True)
+print("DATA DIR EXISTS:", os.path.exists("data"))
 
 
 @pytest.fixture
