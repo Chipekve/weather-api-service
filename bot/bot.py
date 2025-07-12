@@ -74,7 +74,7 @@ async def webhook_handler(request: Request):
     """Обработка webhook от Telegram"""
     try:
         update = await request.json()
-        await dp.feed_update(bot, update)
+        await dp.feed_webhook_update(bot, update)
         return {"ok": True}
     except Exception as e:
         logger.error(f"Ошибка обработки webhook: {e}")
