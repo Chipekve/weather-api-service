@@ -12,6 +12,7 @@ COPY requirements.txt .
 COPY bot/ bot/
 COPY main.py .
 COPY weather_image.py .
+COPY cache.py .
 COPY fonts/ fonts/
 
 # Установка зависимостей Python
