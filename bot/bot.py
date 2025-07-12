@@ -8,6 +8,9 @@ from .handlers import router
 from .keyboards import main_kb
 import sqlite3
 from .middlewares import AntiSpamMiddleware
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 # Настройка логирования
 logging.basicConfig(
@@ -37,7 +40,81 @@ dp.message.middleware(AntiSpamMiddleware(delay=0.1))
 dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
 dp.include_router(router)
 
+# FastAPI приложение для webhook
+app = FastAPI(
+    title="Weather Bot Webhook Server",
+    description="Webhook сервер для Telegram бота",
+    version="1.0.0"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 API_URL = os.getenv("API_BASE_URL", "http://api:8000")
+
+# Webhook endpoints
+@app.get("/")
+async def root():
+    """Корневой эндпоинт"""
+    return {"message": "Weather Bot Webhook Server работает! 🤖"}
+
+@app.get("/health")
+async def health_check():
+    """Проверка здоровья сервиса"""
+    return {"status": "healthy", "bot_token_configured": bool(os.getenv("BOT_TOKEN"))}
+
+@app.post("/webhook")
+async def webhook_handler(request: Request):
+    """Обработка webhook от Telegram"""
+    try:
+        update = await request.json()
+        await dp.feed_update(update)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"Ошибка обработки webhook: {e}")
+        return {"ok": False, "error": str(e)}
+
+@app.get("/webhook")
+async def webhook_info():
+    """Информация о webhook"""
+    return {
+        "webhook_status": "active",
+        "endpoint": "/webhook",
+        "description": "Telegram webhook endpoint"
+    }
+
+@app.on_event("startup")
+async def fastapi_startup():
+    """Инициализация FastAPI приложения"""
+    logger.info("FastAPI webhook сервер запущен")
+    
+    # Настройка webhook
+    webhook_url = os.getenv("WEBHOOK_URL")
+    if webhook_url:
+        try:
+            await bot.set_webhook(
+                url=f"{webhook_url}/webhook",
+                allowed_updates=["message", "callback_query"]
+            )
+            logger.info(f"Webhook настроен: {webhook_url}/webhook")
+        except Exception as e:
+            logger.error(f"Ошибка настройки webhook: {e}")
+
+@app.on_event("shutdown")
+async def fastapi_shutdown():
+    """Очистка при остановке FastAPI"""
+    try:
+        await bot.delete_webhook()
+        logger.info("Webhook удален")
+    except Exception as e:
+        logger.error(f"Ошибка удаления webhook: {e}")
+    logger.info("FastAPI webhook сервер остановлен")
 
 def get_all_user_ids():
     conn = sqlite3.connect("data/users.db")
@@ -78,7 +155,7 @@ async def on_startup(dispatcher):
                     logger.error(f"API сервис не отвечает: {resp.status}")
     except Exception as e:
         logger.error(f"Ошибка подключения к API: {e}")
-    logger.info("Запуск polling...")
+    
     await notify_restart(bot)
 
 async def on_shutdown(dispatcher):
@@ -87,7 +164,21 @@ async def on_shutdown(dispatcher):
 async def main():
     try:
         await on_startup(dp)
-        await dp.start_polling(bot)
+        logger.info("Бот запущен в режиме webhook!")
+        
+        # Запускаем webhook сервер
+        HOST = os.getenv("HOST", "0.0.0.0")
+        PORT = int(os.getenv("PORT", "8001"))
+        
+        config = uvicorn.Config(
+            app=app,
+            host=HOST,
+            port=PORT,
+            log_level="info"
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+            
     except (KeyboardInterrupt, SystemExit):
         await on_shutdown(dp)
         sys.exit(0)
