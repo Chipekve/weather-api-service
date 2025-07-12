@@ -10,6 +10,7 @@ import asyncio
 import logging
 import sqlite3
 from weather_image import generate_weather_image
+from cache import init_redis, close_redis, get_weather_cached, set_weather_cached, get_forecast_cached, set_forecast_cached, get_cities_cached, set_cities_cached, get_cache_stats, clear_cache
 
 load_dotenv()
 
@@ -142,6 +143,19 @@ WELCOME_TEXT = (
 if not WEATHER_API_KEY:
     logger.critical("WEATHER_API_KEY не найден в переменных окружения!")
 
+# События запуска и остановки приложения
+@app.on_event("startup")
+async def startup_event():
+    """Инициализация при запуске"""
+    await init_redis()
+    logger.info("Приложение запущено")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Очистка при остановке"""
+    await close_redis()
+    logger.info("Приложение остановлено")
+
 # Функции для работы с WeatherAPI
 async def fetch_weather_api(
     city: Optional[str] = None,
@@ -149,10 +163,21 @@ async def fetch_weather_api(
     retries: int = 3,
     forecast_days: Optional[int] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Получение данных о погоде от WeatherAPI"""
+    """Получение данных о погоде от WeatherAPI с кэшированием"""
     if not city and not city_id:
         return None
 
+    # Определяем тип кэша и ключ
+    cache_type = "forecast" if forecast_days else "weather"
+    cache_key = city if city else f"id_{city_id}"
+
+    # Пробуем получить из кэша
+    cached_data = await get_weather_cached(cache_key) if cache_type == "weather" else await get_forecast_cached(cache_key)
+    if cached_data:
+        logger.info(f"Данные получены из кэша для {cache_key}")
+        return cached_data
+
+    # Если в кэше нет, делаем запрос к API
     params = {
         "key": WEATHER_API_KEY,
         "lang": "ru",
@@ -171,7 +196,14 @@ async def fetch_weather_api(
                     f"{WEATHER_API_BASE_URL}/{endpoint}", params=params
                 ) as response:
                     if response.status == 200:
-                        return await response.json()
+                        data = await response.json()
+                        # Сохраняем в кэш
+                        if cache_type == "weather":
+                            await set_weather_cached(cache_key, data)
+                        else:
+                            await set_forecast_cached(cache_key, data)
+                        logger.info(f"Данные получены от API и сохранены в кэш для {cache_key}")
+                        return data
                     logger.warning(f"WeatherAPI вернул статус {response.status}")
         except Exception as e:
             logger.error(f"Ошибка WeatherAPI на попытке {attempt + 1}: {e}")
@@ -179,10 +211,17 @@ async def fetch_weather_api(
     return None
 
 async def search_cities_api(query: str, retries: int = 3) -> Optional[List[Dict[str, Any]]]:
-    """Поиск городов через WeatherAPI"""
+    """Поиск городов через WeatherAPI с кэшированием"""
     if len(query) < 2:
         return None
 
+    # Пробуем получить из кэша
+    cached_data = await get_cities_cached(query)
+    if cached_data:
+        logger.info(f"Список городов получен из кэша для запроса '{query}'")
+        return cached_data
+
+    # Если в кэше нет, делаем запрос к API
     for attempt in range(retries):
         try:
             async with aiohttp.ClientSession() as session:
@@ -191,7 +230,11 @@ async def search_cities_api(query: str, retries: int = 3) -> Optional[List[Dict[
                     params={"key": WEATHER_API_KEY, "q": query},
                 ) as response:
                     if response.status == 200:
-                        return await response.json()
+                        data = await response.json()
+                        # Сохраняем в кэш
+                        await set_cities_cached(query, data)
+                        logger.info(f"Список городов получен от API и сохранен в кэш для запроса '{query}'")
+                        return data
                     logger.warning(f"Поиск городов не удался со статусом {response.status}")
         except Exception as e:
             logger.error(f"Ошибка поиска городов на попытке {attempt + 1}: {e}")
@@ -372,6 +415,41 @@ async def weather_image_by_city(request: CityWeatherRequest):
         return Response(content="Ошибка получения погоды", media_type="text/plain", status_code=500)
     buf = generate_weather_image(weather_data, request.city)
     return Response(content=buf.read(), media_type="image/png")
+
+# === Эндпоинты для управления кэшем ===
+@app.get("/cache/stats")
+async def get_cache_statistics():
+    """Получение статистики кэша"""
+    stats = await get_cache_stats()
+    return stats
+
+@app.delete("/cache/clear")
+async def clear_cache_endpoint(cache_type: Optional[str] = None, identifier: Optional[str] = None):
+    """Очистка кэша"""
+    success = await clear_cache(cache_type, identifier)
+    if success:
+        message = "Кэш очищен"
+        if cache_type:
+            message += f" для типа: {cache_type}"
+        if identifier:
+            message += f" и идентификатора: {identifier}"
+        return {"success": True, "message": message}
+    else:
+        raise HTTPException(status_code=500, detail="Ошибка при очистке кэша")
+
+@app.get("/cache/health")
+async def cache_health_check():
+    """Проверка состояния кэша"""
+    stats = await get_cache_stats()
+    if "error" in stats:
+        return {"cache_status": "unavailable", "error": stats["error"]}
+    else:
+        return {
+            "cache_status": "healthy",
+            "connected": stats["connected"],
+            "keys_count": stats["keys_count"],
+            "memory_usage": stats["memory_usage"]
+        }
 
 if __name__ == "__main__":
     uvicorn.run(

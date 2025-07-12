@@ -1,6 +1,14 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - redis_data:/data
+
   api:
     image: chipekve/weather-api-service-api:latest
     ports:
@@ -10,6 +18,10 @@ services:
       - ./data:/app/data
     env_file:
       - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
     restart: always
 
   bot:
@@ -21,6 +33,11 @@ services:
       - .env
     environment:
       - API_BASE_URL=http://api:8000
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - api
-    restart: always 
+      - redis
+    restart: always
+
+volumes:
+  redis_data: 
