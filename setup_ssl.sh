@@ -42,12 +42,13 @@ docker run -d --name nginx_temp \
     nginx:alpine
 
 # Получаем SSL сертификат
+# Замените your-domain.com на ваш домен
 certbot certonly --webroot \
     --webroot-path=/var/www/html \
     --email your-email@example.com \
     --agree-tos \
     --no-eff-email \
-    -d 45.12.109.251
+    -d your-domain.com
 
 # Останавливаем временный nginx
 docker stop nginx_temp
@@ -57,8 +58,8 @@ docker rm nginx_temp
 mkdir -p ssl
 
 # Копируем сертификаты
-cp /etc/letsencrypt/live/45.12.109.251/fullchain.pem ssl/cert.pem
-cp /etc/letsencrypt/live/45.12.109.251/privkey.pem ssl/key.pem
+cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/cert.pem
+cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/key.pem
 
 # Устанавливаем права доступа
 chmod 644 ssl/cert.pem
