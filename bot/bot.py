@@ -33,8 +33,8 @@ bot = Bot(
 
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
-dp.message.middleware(AntiSpamMiddleware(delay=1.0))
-dp.callback_query.middleware(AntiSpamMiddleware(delay=1.0))
+dp.message.middleware(AntiSpamMiddleware(delay=0.1))
+dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
 dp.include_router(router)
 
 API_URL = os.getenv("API_BASE_URL", "http://api:8000")
