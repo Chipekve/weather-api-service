@@ -27,7 +27,7 @@ services:
   bot:
     image: chipekve/weather-api-service-bot:latest
     ports:
-      - "8001:8001"
+      - "8080:8001"
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
