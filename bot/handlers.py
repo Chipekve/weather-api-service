@@ -9,6 +9,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types.input_file import BufferedInputFile
 from aiogram.types import InputMediaPhoto
 
+def get_router():
 router = Router()
 
 @router.message(F.text == "/start")
@@ -315,3 +316,5 @@ async def show_weather_image_handler(callback: types.CallbackQuery):
 @router.callback_query()
 async def log_any_callback(callback: types.CallbackQuery):
     await callback.answer("OK") 
+
+    return router 

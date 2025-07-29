@@ -4,7 +4,7 @@ from aiogram.enums import ParseMode
 import logging
 import sys
 import asyncio
-from .handlers import router
+from .handlers import get_router
 from .keyboards import main_kb
 import sqlite3
 from .middlewares import AntiSpamMiddleware
@@ -31,15 +31,16 @@ if not API_TOKEN:
 from aiogram.client.default import DefaultBotProperties
 
 def get_bot_and_dispatcher():
-    bot = Bot(
-        token=API_TOKEN,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-    )
-    storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
-    dp.message.middleware(AntiSpamMiddleware(delay=0.1))
-    dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
-    dp.include_router(router)
+bot = Bot(
+    token=API_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+)
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
+dp.message.middleware(AntiSpamMiddleware(delay=0.1))
+dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
+    router = get_router()
+dp.include_router(router)
     return bot, dp
 
 bot, dp = get_bot_and_dispatcher()
