@@ -36,7 +36,7 @@ services:
     environment:
       - API_BASE_URL=http://api:8000
       - REDIS_URL=redis://redis:6379
-      - WEBHOOK_URL=${WEBHOOK_URL}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
       - PORT=8001
     depends_on:
       - api

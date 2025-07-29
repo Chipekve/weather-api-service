@@ -179,5 +179,13 @@ async def main_polling():
         sys.exit(0)
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("bot.bot:app", host="0.0.0.0", port=8001, reload=False) 
+    webhook_url = os.getenv("WEBHOOK_URL")
+    if webhook_url:
+        # Запускаем в режиме webhook
+        logger.info("Запускаем бота в режиме webhook...")
+        import uvicorn
+        uvicorn.run("bot.bot:app", host="0.0.0.0", port=8001, reload=False)
+    else:
+        # Запускаем в режиме polling
+        logger.info("Запускаем бота в режиме polling...")
+        asyncio.run(main_polling()) 
