@@ -2,11 +2,10 @@
 
 ```mermaid
 graph TD
-    User("Пользователь в Telegram") --> Bot("Telegram-бот (Webhook)")
+    User("Пользователь в Telegram") --> Bot("Telegram-бот (Polling/Webhook)")
     Bot -->|"API-запрос"| API("API сервис (порт 8000)")
     API -->|"Кэш"| Redis("Redis кэш")
     API -->|"Погодные данные"| WeatherAPI("WeatherAPI.com")
-    Bot -->|"Webhook"| Ngrok("Ngrok туннель")
 ```
 
 ## Структура проекта
@@ -53,12 +52,11 @@ weather-api-service/
 
 ### Контейнеры
 - **API контейнер (порт 8000)** - FastAPI сервер для погодных данных
-- **Bot контейнер (порт 8001)** - Telegram-бот + FastAPI webhook сервер
+- **Bot контейнер (порт 8001)** - Telegram-бот (Polling/Webhook)
 - **Redis контейнер (порт 6379)** - Кэширование данных
 
 ### Webhook архитектура
-- Бот работает через webhook вместо polling для быстрого отклика
-- Ngrok туннель обеспечивает HTTPS доступ к webhook endpoint
+- Бот может работать через webhook для быстрого отклика
 - Автоматическая настройка webhook при запуске
 
 ## Основные возможности
