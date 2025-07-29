@@ -29,16 +29,20 @@ if not API_TOKEN:
     raise RuntimeError("Не задан BOT_TOKEN в переменных окружения!")
 
 from aiogram.client.default import DefaultBotProperties
-bot = Bot(
-    token=API_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-)
 
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
-dp.message.middleware(AntiSpamMiddleware(delay=0.1))
-dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
-dp.include_router(router)
+def get_bot_and_dispatcher():
+    bot = Bot(
+        token=API_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    )
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
+    dp.message.middleware(AntiSpamMiddleware(delay=0.1))
+    dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
+    dp.include_router(router)
+    return bot, dp
+
+bot, dp = get_bot_and_dispatcher()
 
 # FastAPI приложение для webhook
 app = FastAPI(
@@ -170,6 +174,6 @@ async def main_polling():
         await on_shutdown(dp)
         sys.exit(0)
 
-# --- МЕНЯЕМ ТОЧКУ ВХОДА ---
 if __name__ == "__main__":
-    asyncio.run(main_polling()) 
+    import uvicorn
+    uvicorn.run("bot.bot:app", host="0.0.0.0", port=8001, reload=False) 
