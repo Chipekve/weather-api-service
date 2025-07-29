@@ -161,27 +161,15 @@ async def on_startup(dispatcher):
 async def on_shutdown(dispatcher):
     logger.warning("Бот завершает работу (graceful shutdown)...")
 
-async def main():
+async def main_polling():
     try:
         await on_startup(dp)
-        logger.info("Бот запущен в режиме webhook!")
-        
-        # Запускаем webhook сервер
-        HOST = os.getenv("HOST", "0.0.0.0")
-        PORT = int(os.getenv("PORT", "8001"))
-        
-        config = uvicorn.Config(
-            app=app,
-            host=HOST,
-            port=PORT,
-            log_level="info"
-        )
-        server = uvicorn.Server(config)
-        await server.serve()
-            
+        logger.info("Бот запущен в режиме polling!")
+        await dp.start_polling(bot)
     except (KeyboardInterrupt, SystemExit):
         await on_shutdown(dp)
         sys.exit(0)
 
+# --- МЕНЯЕМ ТОЧКУ ВХОДА ---
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main_polling()) 
