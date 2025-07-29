@@ -11,6 +11,7 @@ from .middlewares import AntiSpamMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from contextlib import asynccontextmanager
 
 # Настройка логирования
 logging.basicConfig(
@@ -31,16 +32,16 @@ if not API_TOKEN:
 from aiogram.client.default import DefaultBotProperties
 
 def get_bot_and_dispatcher():
-bot = Bot(
-    token=API_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-)
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
-dp.message.middleware(AntiSpamMiddleware(delay=0.1))
-dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
+    bot = Bot(
+        token=API_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    )
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
+    dp.message.middleware(AntiSpamMiddleware(delay=0.1))
+    dp.callback_query.middleware(AntiSpamMiddleware(delay=0.1))
     router = get_router()
-dp.include_router(router)
+    dp.include_router(router)
     return bot, dp
 
 bot, dp = get_bot_and_dispatcher()
@@ -49,7 +50,8 @@ bot, dp = get_bot_and_dispatcher()
 app = FastAPI(
     title="Weather Bot Webhook Server",
     description="Webhook сервер для Telegram бота",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -94,9 +96,10 @@ async def webhook_info():
         "description": "Telegram webhook endpoint"
     }
 
-@app.on_event("startup")
-async def fastapi_startup():
-    """Инициализация FastAPI приложения"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Управление жизненным циклом FastAPI приложения"""
+    # Startup
     logger.info("FastAPI webhook сервер запущен")
     
     # Настройка webhook
@@ -110,10 +113,10 @@ async def fastapi_startup():
             logger.info(f"Webhook настроен: {webhook_url}/webhook")
         except Exception as e:
             logger.error(f"Ошибка настройки webhook: {e}")
-
-@app.on_event("shutdown")
-async def fastapi_shutdown():
-    """Очистка при остановке FastAPI"""
+    
+    yield
+    
+    # Shutdown
     try:
         await bot.delete_webhook()
         logger.info("Webhook удален")
